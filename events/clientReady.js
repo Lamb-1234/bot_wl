@@ -30,27 +30,33 @@ module.exports = {
                 .setStyle(ButtonStyle.Success)
         );
 
+        // =========================
+        // LÊ PAINEL SALVO
+        // =========================
         let data = {};
-
         try {
             data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-        } catch (e) {}
+        } catch {}
 
-        // 🔥 SE JÁ EXISTE, EDITA EM VEZ DE CRIAR NOVO
+        // =========================
+        // SE JÁ EXISTE PAINEL → EDITA
+        // =========================
         if (data.panelMessageId) {
-            try {
-                const msg = await channel.messages.fetch(data.panelMessageId);
+            const msg = await channel.messages.fetch(data.panelMessageId).catch(() => null);
 
-                return await msg.edit({
+            if (msg) {
+                await msg.edit({
                     embeds: [embed],
                     components: [row],
                 });
-            } catch (err) {
-                console.log("Mensagem antiga não encontrada, criando nova...");
+
+                return; // 🔥 NÃO CRIA OUTRO
             }
         }
 
-        // 🆕 CRIA NOVA E SALVA ID
+        // =========================
+        // SE NÃO EXISTE → CRIA
+        // =========================
         const msg = await channel.send({
             embeds: [embed],
             components: [row],
