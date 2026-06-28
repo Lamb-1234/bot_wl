@@ -1,38 +1,39 @@
-const wlUsers = new Map();
+const db = require("../database/db");
 
-/*
-status:
-pending
-approved
-rejected
-*/
-
-function hasWL(userId) {
-    return wlUsers.has(userId);
+// criar WL
+function createWL(userId, nome, idJogador) {
+    db.run(`
+        INSERT OR REPLACE INTO whitelist (userId, nome, idJogador, status)
+        VALUES (?, ?, ?, 'pending')
+    `, [userId, nome, idJogador]);
 }
 
-function getWL(userId) {
-    return wlUsers.get(userId);
-}
-
-function createWL(userId, data) {
-    wlUsers.set(userId, {
-        status: "pending",
-        ...data
+// buscar WL
+function getWL(userId, callback) {
+    db.get(`
+        SELECT * FROM whitelist WHERE userId = ?
+    `, [userId], (err, row) => {
+        callback(row);
     });
 }
 
-function updateWL(userId, data) {
-    if (!wlUsers.has(userId)) return;
-    wlUsers.set(userId, {
-        ...wlUsers.get(userId),
-        ...data
-    });
+// atualizar status
+function updateStatus(userId, status) {
+    db.run(`
+        UPDATE whitelist SET status = ? WHERE userId = ?
+    `, [status, userId]);
+}
+
+// salvar messageId
+function setMessageId(userId, messageId) {
+    db.run(`
+        UPDATE whitelist SET messageId = ? WHERE userId = ?
+    `, [messageId, userId]);
 }
 
 module.exports = {
-    hasWL,
-    getWL,
     createWL,
-    updateWL
+    getWL,
+    updateStatus,
+    setMessageId
 };
