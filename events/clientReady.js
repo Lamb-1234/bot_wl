@@ -1,5 +1,10 @@
+const fs = require("fs");
+const path = require("path");
+
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const config = require("../config/config");
+
+const filePath = path.join(__dirname, "../data/panel.json");
 
 module.exports = {
     name: "clientReady",
@@ -25,9 +30,34 @@ module.exports = {
                 .setStyle(ButtonStyle.Success)
         );
 
-        await channel.send({
+        let data = {};
+
+        try {
+            data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        } catch (e) {}
+
+        // 🔥 SE JÁ EXISTE, EDITA EM VEZ DE CRIAR NOVO
+        if (data.panelMessageId) {
+            try {
+                const msg = await channel.messages.fetch(data.panelMessageId);
+
+                return await msg.edit({
+                    embeds: [embed],
+                    components: [row],
+                });
+            } catch (err) {
+                console.log("Mensagem antiga não encontrada, criando nova...");
+            }
+        }
+
+        // 🆕 CRIA NOVA E SALVA ID
+        const msg = await channel.send({
             embeds: [embed],
             components: [row],
         });
+
+        fs.writeFileSync(filePath, JSON.stringify({
+            panelMessageId: msg.id
+        }, null, 2));
     }
 };
