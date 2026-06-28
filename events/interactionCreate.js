@@ -1,6 +1,7 @@
 const { canHandleWL } = require("../utils/permissions");
 const { sendLog } = require("../utils/logger");
 const { setNickname } = require("../utils/nickname");
+
 const {
     ModalBuilder,
     TextInputBuilder,
@@ -57,7 +58,6 @@ module.exports = {
             const nome = interaction.fields.getTextInputValue("nome");
             const id = interaction.fields.getTextInputValue("id");
 
-            // validação
             const errorName = validateName(nome);
             const errorId = validateId(id);
 
@@ -69,7 +69,6 @@ module.exports = {
                 return interaction.reply({ content: errorId, ephemeral: true });
             }
 
-            // anti spam (1 WL por pessoa)
             if (wlStore.hasWL(interaction.user.id)) {
                 return interaction.reply({
                     content: "❌ Você já enviou sua whitelist.",
@@ -77,10 +76,7 @@ module.exports = {
                 });
             }
 
-            wlStore.createWL(interaction.user.id, {
-                nome,
-                id
-            });
+            wlStore.createWL(interaction.user.id, { nome, id });
 
             const channel = await interaction.guild.channels.fetch(config.CHANNELS.WL_REQUESTS);
 
@@ -122,25 +118,26 @@ module.exports = {
         }
 
         // =========================
-        // APROVAR / REJEITAR
+        // BOTÕES STAFF (APROVAR / REJEITAR)
         // =========================
-        const staffMember = interaction.member;
-
-if (!canHandleWL(staffMember)) {
-    return interaction.reply({
-        content: "❌ Você não tem permissão para isso.",
-        ephemeral: true
-    });
-}
         if (interaction.isButton()) {
 
             const [action, userId] = interaction.customId.split(":");
-
             if (!action || !userId) return;
+
+            const isStaffAction =
+                action === config.BUTTONS.ACCEPT ||
+                action === config.BUTTONS.REJECT;
+
+            if (isStaffAction && !canHandleWL(interaction.member)) {
+                return interaction.reply({
+                    content: "❌ Você não tem permissão para isso.",
+                    ephemeral: true
+                });
+            }
 
             const wl = wlStore.getWL(userId);
 
-            // proteção contra dupla decisão
             if (!wl || wl.status !== "pending") {
                 return interaction.reply({
                     content: "⚠ Essa whitelist já foi finalizada.",
@@ -163,28 +160,24 @@ if (!canHandleWL(staffMember)) {
             // =========================
             // APROVAR
             // =========================
-            await setNickname(member, wl.nome, wl.id);
-            await sendLog(client, {
+            if (action === config.BUTTONS.ACCEPT) {
+
+                await setNickname(member, wl.nome, wl.id);
+
+                await member.roles.add(config.ROLES.MEMBRO);
+                await member.roles.remove(config.ROLES.OLHEIRO);
+
+                wlStore.updateWL(userId, { status: "approved" });
+
+                await sendLog(client, {
                     userTag: member.user.tag,
                     userId,
                     action: "APROVADA",
                     staff: interaction.user.tag
                 });
-            if (action === config.BUTTONS.ACCEPT) {
 
-                await member.roles.add(config.ROLES.MEMBRO);
-                await member.roles.remove(config.ROLES.OLHEIRO);
-
-                wlStore.updateWL(userId, {
-                    status: "approved"
-                });
-               
-
-                // DM
                 const user = await client.users.fetch(userId).catch(() => null);
-                if (user) {
-                    user.send("🌴 Sua whitelist foi APROVADA! Bem-vindo ao servidor.").catch(() => {});
-                }
+                if (user) user.send("🌴 Sua whitelist foi APROVADA! Bem-vindo ao servidor.").catch(() => {});
 
                 embed.setColor(config.COLORS.SUCCESS);
                 embed.addFields({
@@ -220,22 +213,19 @@ if (!canHandleWL(staffMember)) {
             // =========================
             // REJEITAR
             // =========================
-            await sendLog(client, {
-                userTag: member.user.tag,
-                userId,
-                action: "REJEITADA",
-                staff: interaction.user.tag
-            });
             if (action === config.BUTTONS.REJECT) {
 
-                wlStore.updateWL(userId, {
-                    status: "rejected"
+                wlStore.updateWL(userId, { status: "rejected" });
+
+                await sendLog(client, {
+                    userTag: member.user.tag,
+                    userId,
+                    action: "REJEITADA",
+                    staff: interaction.user.tag
                 });
 
                 const user = await client.users.fetch(userId).catch(() => null);
-                if (user) {
-                    user.send("❌ Sua whitelist foi REJEITADA.").catch(() => {});
-                }
+                if (user) user.send("❌ Sua whitelist foi REJEITADA.").catch(() => {});
 
                 embed.setColor(config.COLORS.ERROR);
                 embed.addFields({
