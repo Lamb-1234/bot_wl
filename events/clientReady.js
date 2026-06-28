@@ -30,40 +30,43 @@ module.exports = {
                 .setStyle(ButtonStyle.Success)
         );
 
-        // =========================
-        // LÊ PAINEL SALVO
-        // =========================
         let data = {};
         try {
             data = JSON.parse(fs.readFileSync(filePath, "utf8"));
         } catch {}
 
+        let msg = null;
+
         // =========================
-        // SE JÁ EXISTE PAINEL → EDITA
+        // tenta buscar mensagem salva
         // =========================
         if (data.panelMessageId) {
-            const msg = await channel.messages.fetch(data.panelMessageId).catch(() => null);
-
-            if (msg) {
-                await msg.edit({
-                    embeds: [embed],
-                    components: [row],
-                });
-
-                return; // 🔥 NÃO CRIA OUTRO
-            }
+            msg = await channel.messages.fetch(data.panelMessageId).catch(() => null);
         }
 
         // =========================
-        // SE NÃO EXISTE → CRIA
+        // SE EXISTE → EDITA
         // =========================
-        const msg = await channel.send({
+        if (msg) {
+            await msg.edit({
+                embeds: [embed],
+                components: [row],
+            });
+
+            return;
+        }
+
+        // =========================
+        // SE NÃO EXISTE → CRIA NOVA
+        // (isso resolve quando você apaga a msg)
+        // =========================
+        const newMsg = await channel.send({
             embeds: [embed],
             components: [row],
         });
 
         fs.writeFileSync(filePath, JSON.stringify({
-            panelMessageId: msg.id
+            panelMessageId: newMsg.id
         }, null, 2));
     }
 };
