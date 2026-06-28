@@ -1,4 +1,3 @@
-console.log("READY EXECUTOU");
 const fs = require("fs");
 const path = require("path");
 
@@ -13,14 +12,9 @@ module.exports = {
 
     async execute(client) {
 
-        // 🔥 TRAVA GLOBAL (EVITA DUPLO EXECUTE)
-        if (global.__panelSent) return;
-        global.__panelSent = true;
-
         console.log(`Bot online: ${client.user.tag}`);
 
         const channel = await client.channels.fetch(config.CHANNELS.WL_PANEL);
-        if (!channel) return console.log("Canal do painel não encontrado.");
 
         const embed = new EmbedBuilder()
             .setTitle("🌴 ROCINHA RP - WHITELIST")
@@ -35,14 +29,15 @@ module.exports = {
                 .setStyle(ButtonStyle.Success)
         );
 
+        let msg = null;
+
+        // =========================
+        // 1. tenta carregar ID salvo
+        // =========================
         let data = {};
         try {
             data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-        } catch {
-            data = {};
-        }
-
-        let msg = null;
+        } catch {}
 
         if (data.panelMessageId) {
             try {
@@ -52,20 +47,38 @@ module.exports = {
             }
         }
 
-        if (msg) {
-            await msg.edit({ embeds: [embed], components: [row] });
-            return;
+        // =========================
+        // 2. SE NÃO ACHOU → PROCURA QUALQUER PAINEL ANTIGO
+        // =========================
+        if (!msg) {
+            const messages = await channel.messages.fetch({ limit: 10 });
+
+            msg = messages.find(m =>
+                m.author.id === client.user.id &&
+                m.components.length > 0
+            ) || null;
         }
 
-        const newMsg = await channel.send({
-            embeds: [embed],
-            components: [row],
-        });
+        // =========================
+        // 3. SE AINDA NÃO ACHOU → CRIA
+        // =========================
+        if (!msg) {
+            msg = await channel.send({
+                embeds: [embed],
+                components: [row],
+            });
+        } else {
+            await msg.edit({
+                embeds: [embed],
+                components: [row],
+            });
+        }
 
+        // =========================
+        // 4. SALVA SEMPRE O ID CERTO
+        // =========================
         fs.writeFileSync(filePath, JSON.stringify({
-            panelMessageId: newMsg.id
+            panelMessageId: msg.id
         }, null, 2));
-
-        console.log("Painel criado/salvo com sucesso:", newMsg.id);
     }
 };
