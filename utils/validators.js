@@ -1,14 +1,13 @@
 function validateName(name) {
+    if (!name) return "Nome obrigatório.";
 
-    if (!name) {
-        return "Informe um nome.";
+    const clean = name.trim();
+
+    if (clean.length > 100) {
+        return "Nome máximo de 100 caracteres.";
     }
 
-    if (name.length > 100) {
-        return "O nome pode ter no máximo 100 caracteres.";
-    }
-
-    const parts = name.trim().split(/\s+/);
+    const parts = clean.split(/\s+/);
 
     if (parts.length < 2) {
         return "Informe nome e sobrenome.";
@@ -18,9 +17,10 @@ function validateName(name) {
 }
 
 function validateId(id) {
+    if (!id) return "ID obrigatório.";
 
     if (!/^\d+$/.test(id)) {
-        return "O ID deve conter apenas números.";
+        return "ID deve conter apenas números.";
     }
 
     return null;
