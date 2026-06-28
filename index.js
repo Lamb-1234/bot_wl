@@ -48,7 +48,7 @@ client.on("guildMemberAdd", async (member) => {
 client.on("ready", async () => {
   console.log(`Bot online: ${client.user.tag}`);
 
-  const channel = client.channels.cache.get(SETUP_CHANNEL);
+  const channel = client.channels.cache.get(SETUP_ID);
   if (!channel) return;
 
   const button = new ButtonBuilder()
