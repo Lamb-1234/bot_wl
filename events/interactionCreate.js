@@ -1,3 +1,6 @@
+const { canHandleWL } = require("../utils/permissions");
+const { sendLog } = require("../utils/logger");
+const { setNickname } = require("../utils/nickname");
 const {
     ModalBuilder,
     TextInputBuilder,
