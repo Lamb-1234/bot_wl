@@ -10,6 +10,7 @@ const {
 
 const config = require("../config/config");
 const { validateName, validateId } = require("../utils/validators");
+const wlStore = require("../data/wlStore");
 
 module.exports = {
     name: "interactionCreate",
@@ -53,6 +54,7 @@ module.exports = {
             const nome = interaction.fields.getTextInputValue("nome");
             const id = interaction.fields.getTextInputValue("id");
 
+            // validação
             const errorName = validateName(nome);
             const errorId = validateId(id);
 
@@ -63,6 +65,19 @@ module.exports = {
             if (errorId) {
                 return interaction.reply({ content: errorId, ephemeral: true });
             }
+
+            // anti spam (1 WL por pessoa)
+            if (wlStore.hasWL(interaction.user.id)) {
+                return interaction.reply({
+                    content: "❌ Você já enviou sua whitelist.",
+                    ephemeral: true
+                });
+            }
+
+            wlStore.createWL(interaction.user.id, {
+                nome,
+                id
+            });
 
             const channel = await interaction.guild.channels.fetch(config.CHANNELS.WL_REQUESTS);
 
@@ -88,7 +103,14 @@ module.exports = {
                     .setStyle(ButtonStyle.Danger)
             );
 
-            await channel.send({ embeds: [embed], components: [row] });
+            const msg = await channel.send({
+                embeds: [embed],
+                components: [row]
+            });
+
+            wlStore.updateWL(interaction.user.id, {
+                messageId: msg.id
+            });
 
             return interaction.reply({
                 content: "✅ Sua whitelist foi enviada!",
@@ -105,14 +127,70 @@ module.exports = {
 
             if (!action || !userId) return;
 
-            const member = await interaction.guild.members.fetch(userId).catch(() => null);
-            if (!member) return interaction.reply({ content: "Usuário não encontrado.", ephemeral: true });
+            const wl = wlStore.getWL(userId);
 
+            // proteção contra dupla decisão
+            if (!wl || wl.status !== "pending") {
+                return interaction.reply({
+                    content: "⚠ Essa whitelist já foi finalizada.",
+                    ephemeral: true
+                });
+            }
+
+            const member = await interaction.guild.members.fetch(userId).catch(() => null);
+
+            if (!member) {
+                return interaction.reply({
+                    content: "Usuário não encontrado.",
+                    ephemeral: true
+                });
+            }
+
+            const message = interaction.message;
+            const embed = EmbedBuilder.from(message.embeds[0]);
+
+            // =========================
             // APROVAR
+            // =========================
             if (action === config.BUTTONS.ACCEPT) {
 
                 await member.roles.add(config.ROLES.MEMBRO);
                 await member.roles.remove(config.ROLES.OLHEIRO);
+
+                wlStore.updateWL(userId, {
+                    status: "approved"
+                });
+
+                // DM
+                const user = await client.users.fetch(userId).catch(() => null);
+                if (user) {
+                    user.send("🌴 Sua whitelist foi APROVADA! Bem-vindo ao servidor.").catch(() => {});
+                }
+
+                embed.setColor(config.COLORS.SUCCESS);
+                embed.addFields({
+                    name: "🟢 Status",
+                    value: `APROVADA por ${interaction.user.tag}`
+                });
+
+                const disabledRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId("disabled_accept")
+                        .setLabel("✔ Aprovada")
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(true),
+
+                    new ButtonBuilder()
+                        .setCustomId("disabled_reject")
+                        .setLabel("❌ Rejeitar")
+                        .setStyle(ButtonStyle.Danger)
+                        .setDisabled(true)
+                );
+
+                await message.edit({
+                    embeds: [embed],
+                    components: [disabledRow]
+                });
 
                 return interaction.reply({
                     content: "✔ Whitelist APROVADA!",
@@ -120,8 +198,44 @@ module.exports = {
                 });
             }
 
+            // =========================
             // REJEITAR
+            // =========================
             if (action === config.BUTTONS.REJECT) {
+
+                wlStore.updateWL(userId, {
+                    status: "rejected"
+                });
+
+                const user = await client.users.fetch(userId).catch(() => null);
+                if (user) {
+                    user.send("❌ Sua whitelist foi REJEITADA.").catch(() => {});
+                }
+
+                embed.setColor(config.COLORS.ERROR);
+                embed.addFields({
+                    name: "🔴 Status",
+                    value: `REJEITADA por ${interaction.user.tag}`
+                });
+
+                const disabledRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId("disabled_accept")
+                        .setLabel("✔ Aprovar")
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(true),
+
+                    new ButtonBuilder()
+                        .setCustomId("disabled_reject")
+                        .setLabel("❌ Rejeitada")
+                        .setStyle(ButtonStyle.Danger)
+                        .setDisabled(true)
+                );
+
+                await message.edit({
+                    embeds: [embed],
+                    components: [disabledRow]
+                });
 
                 return interaction.reply({
                     content: "❌ Whitelist REJEITADA!",
