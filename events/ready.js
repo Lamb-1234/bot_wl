@@ -1,3 +1,4 @@
+const loadCommands = require("../handlers/commandHandler");
 const fs = require("fs");
 const path = require("path");
 
