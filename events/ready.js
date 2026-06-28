@@ -12,6 +12,10 @@ module.exports = {
 
     async execute(client) {
 
+        // 🔥 TRAVA GLOBAL (EVITA DUPLO EXECUTE)
+        if (global.__panelSent) return;
+        global.__panelSent = true;
+
         console.log(`Bot online: ${client.user.tag}`);
 
         const channel = await client.channels.fetch(config.CHANNELS.WL_PANEL);
@@ -30,9 +34,6 @@ module.exports = {
                 .setStyle(ButtonStyle.Success)
         );
 
-        // =========================
-        // LÊ JSON
-        // =========================
         let data = {};
         try {
             data = JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -42,36 +43,19 @@ module.exports = {
 
         let msg = null;
 
-        // =========================
-        // tenta buscar mensagem salva
-        // =========================
         if (data.panelMessageId) {
             try {
                 msg = await channel.messages.fetch(data.panelMessageId);
-
-                // valida se é realmente do bot e tem botão
-                if (!msg || msg.author.id !== client.user.id) msg = null;
-
             } catch {
                 msg = null;
             }
         }
 
-        // =========================
-        // SE EXISTE → EDITA
-        // =========================
         if (msg) {
-            await msg.edit({
-                embeds: [embed],
-                components: [row],
-            });
-
+            await msg.edit({ embeds: [embed], components: [row] });
             return;
         }
 
-        // =========================
-        // SE NÃO EXISTE → CRIA
-        // =========================
         const newMsg = await channel.send({
             embeds: [embed],
             components: [row],
