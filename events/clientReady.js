@@ -30,6 +30,9 @@ module.exports = {
                 .setStyle(ButtonStyle.Success)
         );
 
+        // =========================
+        // LER JSON
+        // =========================
         let data = {};
         try {
             data = JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -38,10 +41,14 @@ module.exports = {
         let msg = null;
 
         // =========================
-        // tenta buscar mensagem salva
+        // TENTA BUSCAR MENSAGEM SALVA
         // =========================
         if (data.panelMessageId) {
-            msg = await channel.messages.fetch(data.panelMessageId).catch(() => null);
+            try {
+                msg = await channel.messages.fetch(data.panelMessageId);
+            } catch {
+                msg = null;
+            }
         }
 
         // =========================
@@ -58,13 +65,13 @@ module.exports = {
 
         // =========================
         // SE NÃO EXISTE → CRIA NOVA
-        // (isso resolve quando você apaga a msg)
         // =========================
         const newMsg = await channel.send({
             embeds: [embed],
             components: [row],
         });
 
+        // salva SEMPRE o ID correto
         fs.writeFileSync(filePath, JSON.stringify({
             panelMessageId: newMsg.id
         }, null, 2));
