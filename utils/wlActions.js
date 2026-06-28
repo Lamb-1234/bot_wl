@@ -1,3 +1,4 @@
+const { PermissionsBitField } = require("discord.js");
 const wlStore = require("../data/wlStore");
 const config = require("../config/config");
 const { setNickname } = require("./nickname");
