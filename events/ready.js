@@ -7,7 +7,7 @@ const config = require("../config/config");
 const filePath = path.join(__dirname, "../data/panel.json");
 
 module.exports = {
-    name: "clientReady",
+    name: "ready",
     once: true,
 
     async execute(client) {
@@ -31,21 +31,27 @@ module.exports = {
         );
 
         // =========================
-        // LER JSON
+        // LÊ JSON
         // =========================
         let data = {};
         try {
             data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-        } catch {}
+        } catch {
+            data = {};
+        }
 
         let msg = null;
 
         // =========================
-        // TENTA BUSCAR MENSAGEM SALVA
+        // tenta buscar mensagem salva
         // =========================
         if (data.panelMessageId) {
             try {
                 msg = await channel.messages.fetch(data.panelMessageId);
+
+                // valida se é realmente do bot e tem botão
+                if (!msg || msg.author.id !== client.user.id) msg = null;
+
             } catch {
                 msg = null;
             }
@@ -64,16 +70,17 @@ module.exports = {
         }
 
         // =========================
-        // SE NÃO EXISTE → CRIA NOVA
+        // SE NÃO EXISTE → CRIA
         // =========================
         const newMsg = await channel.send({
             embeds: [embed],
             components: [row],
         });
 
-        // salva SEMPRE o ID correto
         fs.writeFileSync(filePath, JSON.stringify({
             panelMessageId: newMsg.id
         }, null, 2));
+
+        console.log("Painel criado/salvo com sucesso:", newMsg.id);
     }
 };
