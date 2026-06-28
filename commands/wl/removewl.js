@@ -1,94 +1,62 @@
-const wlStore = require("../data/wlStore");
-const config = require("../config/config");
+const { SlashCommandBuilder } = require("discord.js");
+const wlStore = require("../../data/wlStore");
+const { canHandleWL } = require("../../utils/permissions");
+const { sendLog } = require("../../utils/logger");
 
 module.exports = {
-    name: "removewl",
-    description: "Remove a whitelist de um usuário (Admin only)",
-    options: [
-        {
-            name: "user",
-            description: "Usuário",
-            type: 6,
-            required: true
-        },
-        {
-            name: "motivo",
-            description: "Motivo da remoção",
-            type: 3,
-            required: true
-        }
-    ],
+    data: new SlashCommandBuilder()
+        .setName("removewl")
+        .setDescription("Remove a whitelist de um usuário")
+        .addUserOption(opt =>
+            opt.setName("user")
+                .setDescription("Usuário")
+                .setRequired(true)
+        ),
 
     async execute(interaction, client) {
 
-        const member = interaction.member;
-
-        // =========================
-        // PERMISSÃO ADMIN
-        // =========================
-        const isAdmin =
-            member.permissions.has("Administrator") ||
-            member.roles.cache.has(config.ROLES.ADMIN);
-
-        if (!isAdmin) {
+        if (!canHandleWL(interaction.member)) {
             return interaction.reply({
-                content: "❌ Apenas administradores podem usar este comando.",
-                flags: 64
+                content: "❌ Sem permissão",
+                ephemeral: true
             });
         }
 
         const user = interaction.options.getUser("user");
-        const motivo = interaction.options.getString("motivo");
+        const member = await interaction.guild.members.fetch(user.id).catch(() => null);
 
         const wl = wlStore.getWL(user.id);
 
         if (!wl) {
             return interaction.reply({
-                content: "❌ Esse usuário não possui whitelist.",
-                flags: 64
+                content: "⚠ WL não encontrada.",
+                ephemeral: true
             });
         }
 
-        // =========================
-        // REMOVE WL
-        // =========================
+        // remove do banco
         wlStore.deleteWL(user.id);
 
-        // =========================
-        // DM PRO USUÁRIO
-        // =========================
-        user.send(
-            `❌ Sua whitelist foi REMOVIDA.\n📌 Motivo: **${motivo}**`
-        ).catch(() => {});
-
-        // =========================
-        // LOG NO CANAL
-        // =========================
-        const logChannel = await client.channels.fetch(config.CHANNELS.WL_LOGS).catch(() => null);
-
-        if (logChannel) {
-            logChannel.send({
-                embeds: [
-                    {
-                        title: "🧾 WL REMOVIDA",
-                        color: config.COLORS.ERROR,
-                        fields: [
-                            { name: "👤 Usuário", value: `${user.tag} (${user.id})` },
-                            { name: "🛠️ Removido por", value: `${interaction.user.tag}` },
-                            { name: "📌 Motivo", value: motivo }
-                        ],
-                        timestamp: new Date()
-                    }
-                ]
-            });
+        // remove cargos se existir membro
+        if (member) {
+            await member.roles.remove(process.env.MEMBRO_ID).catch(() => {});
+            await member.roles.remove(process.env.RECRUTADOR_ID).catch(() => {});
         }
 
-        // =========================
-        // RESPOSTA
-        // =========================
+        // log
+        await sendLog(client, {
+            userTag: user.tag,
+            userId: user.id,
+            action: "WL REMOVIDA",
+            staff: interaction.user.tag
+        });
+
+        // DM
+        user.send("⚠ Sua whitelist foi REMOVIDA por um administrador.").catch(() => {});
+
         return interaction.reply({
-            content: `✔ WL de **${user.tag}** removida com sucesso.`,
-            flags: 64
+            content: `✔ WL de ${user.tag} removida com sucesso.`,
+            ephemeral: true
         });
     }
 };
