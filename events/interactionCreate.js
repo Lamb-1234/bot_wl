@@ -124,6 +124,14 @@ module.exports = {
         // =========================
         // APROVAR / REJEITAR
         // =========================
+        const staffMember = interaction.member;
+
+if (!canHandleWL(staffMember)) {
+    return interaction.reply({
+        content: "❌ Você não tem permissão para isso.",
+        ephemeral: true
+    });
+}
         if (interaction.isButton()) {
 
             const [action, userId] = interaction.customId.split(":");
@@ -155,6 +163,13 @@ module.exports = {
             // =========================
             // APROVAR
             // =========================
+            await setNickname(member, wl.nome, wl.id);
+            await sendLog(client, {
+                    userTag: member.user.tag,
+                    userId,
+                    action: "APROVADA",
+                    staff: interaction.user.tag
+                });
             if (action === config.BUTTONS.ACCEPT) {
 
                 await member.roles.add(config.ROLES.MEMBRO);
@@ -163,6 +178,7 @@ module.exports = {
                 wlStore.updateWL(userId, {
                     status: "approved"
                 });
+               
 
                 // DM
                 const user = await client.users.fetch(userId).catch(() => null);
@@ -204,6 +220,12 @@ module.exports = {
             // =========================
             // REJEITAR
             // =========================
+            await sendLog(client, {
+                userTag: member.user.tag,
+                userId,
+                action: "REJEITADA",
+                staff: interaction.user.tag
+            });
             if (action === config.BUTTONS.REJECT) {
 
                 wlStore.updateWL(userId, {
