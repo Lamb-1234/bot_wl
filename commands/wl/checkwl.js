@@ -1,11 +1,11 @@
-const { SlashCommandBuilder } = require("discord.js");
-const wlStore = require("../../data/wlStore");
-const { isAdmin } = require("../../utils/adminOnly");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { checkWL } = require("../../utils/wlActions");
+const { canHandleWL } = require("../../utils/permissions");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("checkwl")
-        .setDescription("Verifica status da whitelist de um usuário")
+        .setDescription("Verifica a whitelist de um usuário")
         .addUserOption(opt =>
             opt.setName("user")
                 .setDescription("Usuário")
@@ -14,27 +14,37 @@ module.exports = {
 
     async execute(interaction) {
 
-        if (!isAdmin(interaction.member)) {
+        if (!canHandleWL(interaction.member)) {
             return interaction.reply({
-                content: "❌ Sem permissão.",
+                content: "❌ Sem permissão",
                 ephemeral: true
             });
         }
 
         const user = interaction.options.getUser("user");
-        const wl = await wlStore.getWL(user.id);
+
+        const wl = await checkWL(user.id);
 
         if (!wl) {
-            return interaction.reply("⚠ Usuário não possui WL.");
+            return interaction.reply({
+                content: "⚠ WL não encontrada.",
+                ephemeral: true
+            });
         }
 
-        return interaction.reply({
-            content:
-`📋 WL INFO
+        const embed = new EmbedBuilder()
+            .setTitle("📋 STATUS DA WHITELIST")
+            .setColor(0x2B2D31)
+            .addFields(
+                { name: "👤 Usuário", value: user.tag },
+                { name: "🆔 ID RP", value: wl.id || "N/A" },
+                { name: "📛 Nome RP", value: wl.nome || "N/A" },
+                { name: "📊 Status", value: wl.status || "pending" },
+                { name: "📅 Criado em", value: `<t:${Math.floor(wl.createdAt / 1000)}:R>` }
+            );
 
-👤 User: ${user.tag}
-🆔 ID: ${wl.idJogador}
-📌 Status: ${wl.status}`,
+        return interaction.reply({
+            embeds: [embed],
             ephemeral: true
         });
     }
