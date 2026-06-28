@@ -9,9 +9,9 @@ module.exports = {
     },
 
     CHANNELS: {
-        WL_PANEL: process.env.SETUP_ID,
+        WL_PANEL: process.env.SETUP_ID,          //canal do botão
         WL_REQUESTS: process.env.WL_REQUESTS_ID, // canal dos admins
-        WL_LOGS: process.env.WL_LOGS_ID
+        WL_LOGS: process.env.WL_LOGS_ID          // canal de logs
     },
 
     BUTTONS: {
