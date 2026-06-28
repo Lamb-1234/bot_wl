@@ -13,6 +13,8 @@ module.exports = {
 
     async execute(client) {
 
+        await loadCommands(client);
+
         console.log(`Bot online: ${client.user.tag}`);
 
         const channel = await client.channels.fetch(config.CHANNELS.WL_PANEL);
