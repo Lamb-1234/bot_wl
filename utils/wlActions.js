@@ -4,7 +4,7 @@ const { sendLog } = require("./logger");
 const { setNickname } = require("./nickname");
 
 // =========================
-// APPROVE WL
+// APROVAR WL
 // =========================
 async function approveWL(client, interaction, userId) {
 
@@ -14,19 +14,19 @@ async function approveWL(client, interaction, userId) {
     const member = await interaction.guild.members.fetch(userId).catch(() => null);
     if (!member) return false;
 
-    // atualiza status
+    // Atualiza status
     wlStore.updateWL(userId, {
         status: "approved"
     });
 
-    // nickname
+    // Nickname
     await setNickname(member, wl.nome, wl.id).catch(() => {});
 
-    // cargos (REGRA PERFEITA)
+    // Cargos
     await member.roles.remove(config.ROLES.OLHEIRO).catch(() => {});
     await member.roles.add(config.ROLES.MEMBRO).catch(() => {});
 
-    // log
+    // Log
     await sendLog(client, {
         userTag: member.user.tag,
         userId,
@@ -44,7 +44,7 @@ async function approveWL(client, interaction, userId) {
 }
 
 // =========================
-// REJECT WL
+// REJEITAR WL
 // =========================
 async function rejectWL(client, interaction, userId, reason = "Não informado") {
 
@@ -59,7 +59,6 @@ async function rejectWL(client, interaction, userId, reason = "Não informado") 
         reason
     });
 
-    // log
     await sendLog(client, {
         userTag: member.user.tag,
         userId,
@@ -67,17 +66,19 @@ async function rejectWL(client, interaction, userId, reason = "Não informado") 
         staff: interaction.user.tag
     });
 
-    // DM
     const user = await client.users.fetch(userId).catch(() => null);
+
     if (user) {
-        user.send(`❌ Sua whitelist foi REJEITADA.\nMotivo: **${reason}**`).catch(() => {});
+        user.send(
+            `❌ Sua whitelist foi REJEITADA.\n\nMotivo: **${reason}**`
+        ).catch(() => {});
     }
 
     return true;
 }
 
 // =========================
-// REMOVE WL (ADMIN)
+// REMOVER WL
 // =========================
 async function removeWL(client, interaction, userId) {
 
@@ -86,22 +87,31 @@ async function removeWL(client, interaction, userId) {
 
     const member = await interaction.guild.members.fetch(userId).catch(() => null);
 
-    // remove do banco
+    // Remove do banco
     wlStore.deleteWL(userId);
 
-    // remove cargo membro se existir
     if (member) {
+
+        // Remove cargos de membro
         await member.roles.remove(config.ROLES.MEMBRO).catch(() => {});
+        await member.roles.remove(config.ROLES.RECRUTADOR).catch(() => {});
+
+        // Devolve cargo de Olheiro
         await member.roles.add(config.ROLES.OLHEIRO).catch(() => {});
     }
 
-    // log
     await sendLog(client, {
         userTag: member ? member.user.tag : "Desconhecido",
         userId,
         action: "WL REMOVIDA",
         staff: interaction.user.tag
     });
+
+    const user = await client.users.fetch(userId).catch(() => null);
+
+    if (user) {
+        user.send("⚠ Sua whitelist foi removida por um administrador.").catch(() => {});
+    }
 
     return true;
 }
