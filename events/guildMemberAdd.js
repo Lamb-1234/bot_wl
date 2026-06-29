@@ -1,19 +1,31 @@
 const config = require("../config/config");
+const wlData = require("../data/wlData.json");
 
 module.exports = {
     name: "guildMemberAdd",
 
     async execute(member) {
 
-        const role = member.guild.roles.cache.get(config.ROLES.OLHEIRO);
+        const hasWL = wlData[member.id]?.status === "approved";
 
-        if (!role) return;
+        const olheiroRole = member.guild.roles.cache.get(config.ROLES.OLHEIRO);
+        const wlRole = member.guild.roles.cache.get(config.ROLES.WL); // se tiver
 
         try {
-            await member.roles.add(role);
-        } catch (err) {
-            console.log("Erro ao dar cargo OLHEIRO:", err);
-        }
 
+            // se tem WL
+            if (hasWL) {
+                if (wlRole) await member.roles.add(wlRole).catch(() => {});
+                if (olheiroRole) await member.roles.remove(olheiroRole).catch(() => {});
+            }
+
+            // se NÃO tem WL
+            if (!hasWL) {
+                if (olheiroRole) await member.roles.add(olheiroRole);
+            }
+
+        } catch (err) {
+            console.log("Erro ao gerenciar cargos:", err);
+        }
     }
 };
