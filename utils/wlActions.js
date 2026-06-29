@@ -104,6 +104,9 @@ async function removeWL(client, interaction, userId, reason = "Não informado") 
     if (member) {
         await member.roles.remove(config.ROLES.MEMBRO).catch(() => {});
         await member.roles.add(config.ROLES.OLHEIRO).catch(() => {});
+        
+         // 🔥 RESETA O NICKNAME
+        await member.setNickname(member.user.username).catch(() => {});
     }
 
     await sendLog(client, {
