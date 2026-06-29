@@ -3,6 +3,7 @@ const wlStore = require("../data/wlStore");
 const config = require("../config/config");
 const { setNickname } = require("./nickname");
 const { sendLog } = require("./logger");
+const { formatNickname } = require("./tags");
 
 // =========================
 // APPROVE WL
@@ -15,8 +16,7 @@ async function approveWL(client, interaction, userId) {
     const member = await interaction.guild.members.fetch(userId).catch(() => null);
     if (!member) return false;
 
-    await setNickname(member, wl.nome, wl.id);
-
+    await member.setNickname(formatNickname(member, wl)).catch(() => {});
     await member.roles.add(config.ROLES.MEMBRO).catch(() => {});
     await member.roles.remove(config.ROLES.OLHEIRO).catch(() => {});
 
