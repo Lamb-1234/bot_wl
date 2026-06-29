@@ -1,8 +1,8 @@
 const config = require("../config/config");
 
-// hierarquia do maior pro menor
+// Hierarquia (do maior para o menor)
 const tagHierarchy = [
-    { role: config.ROLES.ADMIN, tag: "[A]" },
+    { role: config.ROLES.ADMIN, tag: "[ADM]" },
     { role: config.ROLES.RECRUTADOR, tag: "[R]" },
     { role: config.ROLES.MEMBRO, tag: "[M]" }
 ];
@@ -10,26 +10,24 @@ const tagHierarchy = [
 function getTagForMember(member) {
     if (!member) return "";
 
-    const highest = tagHierarchy.find(t =>
-        member.roles.cache.has(t.role)
+    const role = tagHierarchy.find(r =>
+        member.roles.cache.has(r.role)
     );
 
-    if (!highest) return "";
-
-    return highest.tag;
+    return role ? role.tag : "";
 }
 
 function formatNickname(member, wl = null) {
     if (!member) return null;
 
+    // Sem WL = nome padrão
+    if (!wl) {
+        return member.user.username;
+    }
+
     const tag = getTagForMember(member);
-    const name = wl?.nome || member.user.username;
-    const id = wl?.id || "";
 
-    // se não tiver WL (ex: OLHEIRO)
-    if (!wl) return `${name}`;
-
-    return `${tag} ${name} | ${id}`;
+    return `${tag ? tag + " " : ""}${wl.nome} | ${wl.id}`;
 }
 
 module.exports = {
