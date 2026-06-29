@@ -1,15 +1,18 @@
-const fs = require("fs");
-const wlData = require("../data/wlData.json");
+const wlStore = require("../data/wlStore");
 
-module.exports = async (member) => {
-  const userId = member.id;
+module.exports = {
+    name: "guildMemberRemove",
 
-  if (wlData[userId]) {
-    delete wlData[userId];
+    async execute(member) {
 
-    fs.writeFileSync(
-      "./data/wlData.json",
-      JSON.stringify(wlData, null, 2)
-    );
-  }
+        const userId = member.id;
+
+        // remove a WL do sistema principal
+        const wl = wlStore.getWL(userId);
+
+        if (wl) {
+            wlStore.deleteWL(userId);
+            console.log(`🧹 WL removida automaticamente: ${userId}`);
+        }
+    }
 };
