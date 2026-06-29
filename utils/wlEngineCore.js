@@ -3,6 +3,8 @@ const config = require("../config/config");
 const { formatNickname } = require("./tags");
 
 async function applyUserState(member, client = null) {
+    console.log("Entrou no applyUserState:", member.user.tag);
+    console.log("Cargo OLHEIRO:", config.ROLES.OLHEIRO);
     if (!member) return;
 
     const wl = wlStore.getWL(member.id);
