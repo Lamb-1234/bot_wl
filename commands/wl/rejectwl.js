@@ -10,6 +10,11 @@ module.exports = {
             opt.setName("user")
                 .setDescription("Usuário")
                 .setRequired(true)
+        )
+        .addStringOption(opt =>
+            opt.setName("reason")
+                .setDescription("Motivo da rejeição")
+                .setRequired(true)
         ),
 
     async execute(interaction, client) {
@@ -22,8 +27,9 @@ module.exports = {
         }
 
         const user = interaction.options.getUser("user");
+        const reason = interaction.options.getString("reason");
 
-        const success = await rejectWL(client, interaction, user.id);
+        const success = await rejectWL(client, user.id, reason);
 
         if (!success) {
             return interaction.reply({
@@ -33,7 +39,7 @@ module.exports = {
         }
 
         return interaction.reply({
-            content: `❌ WL de ${user.tag} rejeitada com sucesso.`,
+            content: `❌ WL de ${user.tag} rejeitada com sucesso.\n📌 Motivo: ${reason}`,
             ephemeral: true
         });
     }
