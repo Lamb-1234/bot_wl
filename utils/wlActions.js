@@ -27,10 +27,15 @@ async function approveWL(client, interaction, userId) {
     const member = await getMember(interaction.guild, userId);
     if (!member) return false;
 
-    await member.setNickname(formatNickname(member, wl)).catch(() => {});
-
+    // Primeiro altera os cargos
     await member.roles.add(config.ROLES.MEMBRO).catch(() => {});
     await member.roles.remove(config.ROLES.OLHEIRO).catch(() => {});
+
+    // Atualiza o cache do membro
+    await member.fetch();
+
+    // Agora aplica o nickname já com a tag correta
+    await member.setNickname(formatNickname(member, wl)).catch(() => {});
 
     wlStore.updateWL(userId, { status: "approved" });
 
