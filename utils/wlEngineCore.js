@@ -12,8 +12,8 @@ async function applyUserState(member, client = null) {
     // =========================
     if (!wl || wl.status !== "approved") {
 
-        await member.roles.add(config.ROLES.OLHEIRO).catch(() => {});
-        await member.roles.remove(config.ROLES.MEMBRO).catch(() => {});
+        await member.roles.add(config.ROLES.OLHEIRO).catch(console.error);
+        await member.roles.remove(config.ROLES.MEMBRO).catch(console.error);
 
         await member.setNickname(member.user.username).catch(() => {});
         return;
