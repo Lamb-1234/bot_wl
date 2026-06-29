@@ -1,14 +1,14 @@
 const { SlashCommandBuilder } = require("discord.js");
-const wlStore = require("../../data/wlStore");
+const { removeWL } = require("../../utils/wlActions");
 const { canHandleWL } = require("../../utils/permissions");
-const { sendLog } = require("../../utils/logger");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("removewl")
         .setDescription("Remove a whitelist de um usuário")
-        .addUserOption(opt =>
-            opt.setName("user")
+        .addUserOption(option =>
+            option
+                .setName("user")
                 .setDescription("Usuário")
                 .setRequired(true)
         ),
@@ -17,45 +17,24 @@ module.exports = {
 
         if (!canHandleWL(interaction.member)) {
             return interaction.reply({
-                content: "❌ Sem permissão",
+                content: "❌ Você não tem permissão para usar este comando.",
                 ephemeral: true
             });
         }
 
         const user = interaction.options.getUser("user");
-        const member = await interaction.guild.members.fetch(user.id).catch(() => null);
 
-        const wl = wlStore.getWL(user.id);
+        const success = await removeWL(client, interaction, user.id);
 
-        if (!wl) {
+        if (!success) {
             return interaction.reply({
-                content: "⚠ WL não encontrada.",
+                content: "⚠ Esse usuário não possui uma whitelist cadastrada.",
                 ephemeral: true
             });
         }
 
-        // remove do banco
-        wlStore.deleteWL(user.id);
-
-        // remove cargos se existir membro
-        if (member) {
-            await member.roles.remove(process.env.MEMBRO_ID).catch(() => {});
-            await member.roles.remove(process.env.RECRUTADOR_ID).catch(() => {});
-        }
-
-        // log
-        await sendLog(client, {
-            userTag: user.tag,
-            userId: user.id,
-            action: "WL REMOVIDA",
-            staff: interaction.user.tag
-        });
-
-        // DM
-        user.send("⚠ Sua whitelist foi REMOVIDA por um administrador.").catch(() => {});
-
         return interaction.reply({
-            content: `✔ WL de ${user.tag} removida com sucesso.`,
+            content: `✅ A whitelist de **${user.tag}** foi removida com sucesso.`,
             ephemeral: true
         });
     }
