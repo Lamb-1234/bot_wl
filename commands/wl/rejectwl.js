@@ -10,6 +10,11 @@ module.exports = {
             opt.setName("user")
                 .setDescription("Usuário")
                 .setRequired(true)
+        )
+        .addStringOption(opt =>
+            opt.setName("motivo")
+                .setDescription("Motivo da rejeição")
+                .setRequired(true)
         ),
 
     async execute(interaction, client) {
@@ -22,8 +27,9 @@ module.exports = {
         }
 
         const user = interaction.options.getUser("user");
+        const motivo = interaction.options.getString("motivo");
 
-        const success = await rejectWL(client, interaction, user.id);
+        const success = await rejectWL(client, interaction, user.id, motivo);
 
         if (!success) {
             return interaction.reply({
