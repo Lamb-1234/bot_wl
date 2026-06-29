@@ -7,17 +7,51 @@ async function sendLog(client, data) {
     if (!channel) return;
 
     const embed = new EmbedBuilder()
-        .setTitle("📊 LOG WHITELIST")
-        .setColor(0x2B2D31)
+        .setTitle("📋 LOG DE WHITELIST")
+        .setColor(config.COLORS.PRIMARY)
         .addFields(
-            { name: "👤 Usuário", value: data.userTag },
-            { name: "🆔 ID", value: data.userId },
-            { name: "📌 Ação", value: data.action },
-            { name: "👮 Moderador", value: data.staff },
-            { name: "⏰ Data", value: new Date().toLocaleString("pt-BR") }
+            {
+                name: "👤 Usuário",
+                value: data.userTag || "Desconhecido",
+                inline: true
+            },
+            {
+                name: "🆔 ID Discord",
+                value: data.userId || "Desconhecido",
+                inline: true
+            },
+            {
+                name: "👮 Moderador",
+                value: data.staff || "Sistema",
+                inline: true
+            },
+            {
+                name: "📌 Ação",
+                value: data.action,
+                inline: false
+            }
         );
 
-    channel.send({ embeds: [embed] });
+    // Adiciona motivo somente se existir
+    if (data.reason) {
+        embed.addFields({
+            name: "📝 Motivo",
+            value: data.reason,
+            inline: false
+        });
+    }
+
+    embed
+        .setTimestamp()
+        .setFooter({
+            text: config.EMBED_FOOTER
+        });
+
+    await channel.send({
+        embeds: [embed]
+    });
 }
 
-module.exports = { sendLog };
+module.exports = {
+    sendLog
+};
