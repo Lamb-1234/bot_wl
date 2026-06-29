@@ -1,6 +1,8 @@
 const { canHandleWL } = require("../utils/permissions");
-const { sendLog } = require("../utils/logger");
-const { setNickname } = require("../utils/nickname");
+const {
+    approveWL,
+    rejectWL
+} = require("../utils/wlActions");
 
 const {
     ModalBuilder,
@@ -186,19 +188,16 @@ if (interaction.isChatInputCommand()) {
             // =========================
             if (action === config.BUTTONS.ACCEPT) {
 
-                await setNickname(member, wl.nome, wl.id);
+                const { approveWL } = require("../utils/wlActions");
 
-                await member.roles.add(config.ROLES.MEMBRO);
-                await member.roles.remove(config.ROLES.OLHEIRO);
+                const success = await approveWL(client, interaction, userId);
 
-                wlStore.updateWL(userId, { status: "approved" });
-
-                await sendLog(client, {
-                    userTag: member.user.tag,
-                    userId,
-                    action: "APROVADA",
-                    staff: interaction.user.tag
-                });
+                if (!success) {
+                    return interaction.reply({
+                        content: "❌ Erro ao aprovar a whitelist.",
+                        ephemeral: true
+                    });
+                }
 
                 const user = await client.users.fetch(userId).catch(() => null);
                 if (user) user.send("🌴 Sua whitelist foi APROVADA! Bem-vindo ao servidor.").catch(() => {});
@@ -239,23 +238,15 @@ if (interaction.isChatInputCommand()) {
             // =========================
             if (action === config.BUTTONS.REJECT) {
 
-                wlStore.updateWL(userId, { status: "rejected" });
+                const { rejectWL } = require("../utils/wlActions");
+                const success = await rejectWL(client, interaction, userId);
 
-                await sendLog(client, {
-                    userTag: member.user.tag,
-                    userId,
-                    action: "REJEITADA",
-                    staff: interaction.user.tag
-                });
-
-                const user = await client.users.fetch(userId).catch(() => null);
-                if (user) user.send("❌ Sua whitelist foi REJEITADA.").catch(() => {});
-
-                embed.setColor(config.COLORS.ERROR);
-                embed.addFields({
-                    name: "🔴 Status",
-                    value: `REJEITADA por ${interaction.user.tag}`
-                });
+                if (!success) {
+                    return interaction.reply({
+                        content: "❌ Erro ao rejeitar a whitelist.",
+                        ephemeral: true
+                    });
+                }
 
                 const disabledRow = new ActionRowBuilder().addComponents(
                     new ButtonBuilder()
