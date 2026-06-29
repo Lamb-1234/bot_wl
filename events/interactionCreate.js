@@ -188,50 +188,47 @@ if (interaction.isChatInputCommand()) {
             // =========================
             if (action === config.BUTTONS.ACCEPT) {
 
-                const { approveWL } = require("../utils/wlActions");
+            const { approveWL } = require("../utils/wlActions");
 
-                const success = await approveWL(client, interaction, userId);
+            const success = await approveWL(client, interaction, userId);
 
-                if (!success) {
-                    return interaction.reply({
-                        content: "❌ Erro ao aprovar a whitelist.",
-                        ephemeral: true
-                    });
-                }
-
-                const user = await client.users.fetch(userId).catch(() => null);
-                if (user) user.send("🌴 Sua whitelist foi APROVADA! Bem-vindo ao servidor.").catch(() => {});
-
-                embed.setColor(config.COLORS.SUCCESS);
-                embed.addFields({
-                    name: "🟢 Status",
-                    value: `APROVADA por ${interaction.user.tag}`
-                });
-
-                const disabledRow = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder()
-                        .setCustomId("disabled_accept")
-                        .setLabel("✔ Aprovada")
-                        .setStyle(ButtonStyle.Success)
-                        .setDisabled(true),
-
-                    new ButtonBuilder()
-                        .setCustomId("disabled_reject")
-                        .setLabel("❌ Rejeitar")
-                        .setStyle(ButtonStyle.Danger)
-                        .setDisabled(true)
-                );
-
-                await message.edit({
-                    embeds: [embed],
-                    components: [disabledRow]
-                });
-
+            if (!success) {
                 return interaction.reply({
-                    content: "✔ Whitelist APROVADA!",
-                    ephemeral: true
+                content: "❌ Erro ao aprovar a whitelist.",
+                ephemeral: true
                 });
             }
+
+    embed.setColor(config.COLORS.SUCCESS);
+    embed.addFields({
+        name: "🟢 Status",
+        value: `APROVADA por ${interaction.user.tag}`
+    });
+
+    const disabledRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId("disabled_accept")
+            .setLabel("✔ Aprovada")
+            .setStyle(ButtonStyle.Success)
+            .setDisabled(true),
+
+        new ButtonBuilder()
+            .setCustomId("disabled_reject")
+            .setLabel("❌ Rejeitar")
+            .setStyle(ButtonStyle.Danger)
+            .setDisabled(true)
+    );
+
+    await message.edit({
+        embeds: [embed],
+        components: [disabledRow]
+    });
+
+    return interaction.reply({
+        content: "✔ Whitelist APROVADA!",
+        ephemeral: true
+        });
+    }
 
             // =========================
             // REJEITAR
