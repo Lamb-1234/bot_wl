@@ -1,3 +1,9 @@
+console.log("OLHEIRO ID:", config.ROLES.OLHEIRO);
+
+const role = member.guild.roles.cache.get(config.ROLES.OLHEIRO);
+
+console.log("ROLE ENCONTRADA:", role);
+
 const fs = require("fs");
 const path = require("path");
 
