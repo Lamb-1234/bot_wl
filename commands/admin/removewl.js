@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
-const wlStore = require("../../data/wlStore");
+const { removeWL } = require("../../utils/wlActions");
 const { canHandleWL } = require("../../utils/permissions");
-const { sendLog } = require("../../utils/logger");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -10,6 +9,11 @@ module.exports = {
         .addUserOption(opt =>
             opt.setName("user")
                 .setDescription("Usuário")
+                .setRequired(true)
+        )
+        .addStringOption(opt =>
+            opt.setName("motivo")
+                .setDescription("Motivo da remoção")
                 .setRequired(true)
         ),
 
@@ -23,39 +27,19 @@ module.exports = {
         }
 
         const user = interaction.options.getUser("user");
-        const member = await interaction.guild.members.fetch(user.id).catch(() => null);
+        const reason = interaction.options.getString("motivo");
 
-        const wl = wlStore.getWL(user.id);
+        const success = await removeWL(client, interaction, user.id, reason);
 
-        if (!wl) {
+        if (!success) {
             return interaction.reply({
-                content: "⚠ WL não encontrada.",
+                content: "⚠ WL não encontrada ou erro ao remover.",
                 ephemeral: true
             });
         }
 
-        // remove do banco
-        wlStore.deleteWL(user.id);
-
-        // remove cargos se existir membro
-        if (member) {
-            await member.roles.remove(process.env.MEMBRO_ID).catch(() => {});
-            await member.roles.remove(process.env.RECRUTADOR_ID).catch(() => {});
-        }
-
-        // log
-        await sendLog(client, {
-            userTag: user.tag,
-            userId: user.id,
-            action: "WL REMOVIDA",
-            staff: interaction.user.tag
-        });
-
-        // DM
-        user.send("⚠ Sua whitelist foi REMOVIDA por um administrador.").catch(() => {});
-
         return interaction.reply({
-            content: `✔ WL de ${user.tag} removida com sucesso.`,
+            content: `⚠ WL de ${user.tag} removida com sucesso.\n📝 Motivo: ${reason}`,
             ephemeral: true
         });
     }
