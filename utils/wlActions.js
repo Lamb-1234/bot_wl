@@ -17,7 +17,10 @@ async function approveWL(client, interaction, userId) {
     await member.roles.add(config.ROLES.MEMBRO).catch(() => {});
     await member.roles.remove(config.ROLES.OLHEIRO).catch(() => {});
 
-    wlStore.updateWL(userId, { status: "approved" });
+    wlStore.updateWL(userId, {
+        status: "approved",
+        updatedAt: new Date().toISOString()
+    });
 
     await sendLog(client, {
         userTag: member.user.tag,
@@ -34,26 +37,32 @@ async function approveWL(client, interaction, userId) {
     return true;
 }
 
-async function rejectWL(client, interaction, userId) {
+async function rejectWL(client, interaction, userId, reason = "Não informado") {
 
     const wl = wlStore.getWL(userId);
     if (!wl) return false;
 
     const member = await interaction.guild.members.fetch(userId).catch(() => null);
-    if (!member) return false;
 
-    wlStore.updateWL(userId, { status: "rejected" });
+    wlStore.updateWL(userId, {
+        status: "rejected",
+        reason: reason,
+        updatedAt: new Date().toISOString()
+    });
 
     await sendLog(client, {
-        userTag: member.user.tag,
+        userTag: member?.user.tag || "Desconhecido",
         userId,
         action: "WL REJEITADA",
-        staff: interaction.user.tag
+        staff: interaction.user.tag,
+        reason: reason
     });
 
     const user = await client.users.fetch(userId).catch(() => null);
     if (user) {
-        user.send("❌ Sua whitelist foi REJEITADA.").catch(() => {});
+        user.send(
+            `❌ Sua whitelist foi REJEITADA.\n\n📌 Motivo: **${reason}**`
+        ).catch(() => {});
     }
 
     return true;
