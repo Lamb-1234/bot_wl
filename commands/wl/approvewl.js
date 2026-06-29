@@ -36,3 +36,5 @@ module.exports = {
             content: `✔ WL de ${user.tag} aprovada com sucesso.`,
             ephemeral: true
         });
+    }
+};
