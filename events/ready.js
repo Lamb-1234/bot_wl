@@ -8,7 +8,7 @@ const config = require("../config/config");
 const filePath = path.join(__dirname, "../data/panel.json");
 
 module.exports = {
-    name: "ready",
+    name: "clientReady",
     once: true,
 
     async execute(client) {
