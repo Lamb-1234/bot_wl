@@ -1,19 +1,9 @@
-const config = require("../config/config");
+const { applyUserState } = require("../utils/wlEngineCore");
 
 module.exports = {
     name: "guildMemberAdd",
 
     async execute(member) {
-
-        const role = member.guild.roles.cache.get(config.ROLES.OLHEIRO);
-
-        if (!role) return;
-
-        try {
-            await member.roles.add(role);
-        } catch (err) {
-            console.log("Erro ao dar cargo OLHEIRO:", err);
-        }
-
+        await applyUserState(member);
     }
 };
