@@ -1,7 +1,6 @@
-const wlStore = require("../data/wlStore");
-const config = require("../config/config");
-const { sendLog } = require("./logger");
-const { setNickname } = require("./nickname");
+const { SlashCommandBuilder } = require("discord.js");
+const { approveWL } = require("../../utils/wlActions");
+const { canHandleWL } = require("../../utils/permissions");
 
 module.exports = {
     data: new SlashCommandBuilder()
