@@ -34,26 +34,30 @@ async function approveWL(client, interaction, userId) {
     return true;
 }
 
-async function rejectWL(client, interaction, userId) {
+async function rejectWL(client, interaction, userId, reason = "Não informado") {
 
     const wl = wlStore.getWL(userId);
     if (!wl) return false;
 
     const member = await interaction.guild.members.fetch(userId).catch(() => null);
-    if (!member) return false;
 
-    wlStore.updateWL(userId, { status: "rejected" });
+    // Remove a WL do banco
+    wlStore.deleteWL(userId);
 
+    // Envia o log
     await sendLog(client, {
-        userTag: member.user.tag,
+        userTag: member ? member.user.tag : "Desconhecido",
         userId,
-        action: "WL REJEITADA",
+        action: `WL REJEITADA (${reason})`,
         staff: interaction.user.tag
     });
 
+    // Envia DM para o usuário
     const user = await client.users.fetch(userId).catch(() => null);
     if (user) {
-        user.send("❌ Sua whitelist foi REJEITADA.").catch(() => {});
+        user.send(
+            `❌ Sua whitelist foi rejeitada.\n\n**Motivo:** ${reason}`
+        ).catch(() => {});
     }
 
     return true;
