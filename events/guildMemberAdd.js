@@ -8,16 +8,26 @@ module.exports = {
 
         const wl = wlStore.getWL(member.id);
 
-        // Se já tem WL aprovada, NÃO dá olheiro
-        if (wl && wl.status === "approved") return;
+        const olho = member.guild.roles.cache.get(config.ROLES.OLHEIRO);
+        const membro = member.guild.roles.cache.get(config.ROLES.MEMBRO);
 
-        const role = member.guild.roles.cache.get(config.ROLES.OLHEIRO);
-        if (!role) return;
+        if (!olho) return;
 
         try {
-            await member.roles.add(role);
+
+            // SEM WL → OLHEIRO
+            if (!wl || wl.status !== "approved") {
+                await member.roles.add(olho).catch(() => {});
+                return;
+            }
+
+            // COM WL APROVADA → MEMBRO
+            if (membro) {
+                await member.roles.add(membro).catch(() => {});
+            }
+
         } catch (err) {
-            console.log("Erro ao dar cargo OLHEIRO:", err.message);
+            console.log("Erro guildMemberAdd:", err.message);
         }
     }
 };
