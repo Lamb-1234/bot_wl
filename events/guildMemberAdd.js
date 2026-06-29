@@ -1,3 +1,4 @@
+console.log("guildMemberAdd CARREGADO");
 const config = require("../config/config");
 const wlData = require("../data/wlData.json");
 
