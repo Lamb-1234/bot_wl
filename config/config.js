@@ -27,7 +27,7 @@ module.exports = {
         WARNING: 0xFEE75C,
     },
 
-    EMBED_FOOTER: "Rocinha RP • Whitelist System"
+    EMBED_FOOTER: "Rocinha RP • Whitelist System",
     
     VERSION: "2.0.0"
 };
