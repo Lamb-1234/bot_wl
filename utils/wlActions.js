@@ -27,18 +27,20 @@ async function approveWL(client, interaction, userId) {
     const member = await getMember(interaction.guild, userId);
     if (!member) return false;
 
-    // Primeiro altera os cargos
+    // atualiza status PRIMEIRO (estado do sistema)
+    wlStore.updateWL(userId, { status: "approved" });
+
+    // cargos
     await member.roles.add(config.ROLES.MEMBRO).catch(() => {});
     await member.roles.remove(config.ROLES.OLHEIRO).catch(() => {});
 
-    // Atualiza o cache do membro
-    await member.fetch();
+    // garante cache atualizado antes do nickname
+    await interaction.guild.members.fetch(userId).catch(() => {});
 
-    // Agora aplica o nickname já com a tag correta
+    // nickname centralizado
     await member.setNickname(formatNickname(member, wl)).catch(() => {});
 
-    wlStore.updateWL(userId, { status: "approved" });
-
+    // log
     await sendLog(client, {
         userTag: member.user.tag,
         userId,
@@ -46,6 +48,7 @@ async function approveWL(client, interaction, userId) {
         staff: interaction.user.tag
     });
 
+    // DM
     const user = await getUser(client, userId);
 
     if (user) {
@@ -57,7 +60,7 @@ async function approveWL(client, interaction, userId) {
                     .setDescription("Parabéns! Sua whitelist foi aprovada.")
                     .addFields({
                         name: "🎉 Status",
-                        value: "Você já pode jogar no servidor."
+                        value: "Você já pode utilizar o servidor."
                     })
                     .setFooter({ text: config.EMBED_FOOTER })
                     .setTimestamp()
@@ -78,7 +81,7 @@ async function rejectWL(client, interaction, userId, reason = "Não informado") 
 
     const member = await getMember(interaction.guild, userId);
 
-    wlStore.deleteWL(userId);
+    wlStore.updateWL(userId, { status: "rejected" });
 
     await sendLog(client, {
         userTag: member?.user.tag || "Desconhecido",
@@ -124,6 +127,9 @@ async function removeWL(client, interaction, userId, reason = "Não informado") 
     if (member) {
         await member.roles.remove(config.ROLES.MEMBRO).catch(() => {});
         await member.roles.add(config.ROLES.OLHEIRO).catch(() => {});
+
+        await interaction.guild.members.fetch(userId).catch(() => {});
+
         await member.setNickname(member.user.username).catch(() => {});
     }
 
