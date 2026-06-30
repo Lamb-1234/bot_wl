@@ -194,10 +194,14 @@ if (interaction.isChatInputCommand()) {
 
             if (!success) {
                 return interaction.reply({
-                content: "❌ Erro ao aprovar a whitelist.",
-                ephemeral: true
+                    content: "❌ Erro ao aprovar a whitelist.",
+                    ephemeral: true
                 });
             }
+
+    const message = interaction.message;
+
+    const embed = EmbedBuilder.from(message.embeds[0]);
 
     embed.setColor(config.COLORS.SUCCESS);
     embed.addFields({
@@ -227,9 +231,8 @@ if (interaction.isChatInputCommand()) {
     return interaction.reply({
         content: "✔ Whitelist APROVADA!",
         ephemeral: true
-        });
-    }
-
+    });
+}
             // =========================
             // REJEITAR
             // =========================
