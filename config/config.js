@@ -28,4 +28,6 @@ module.exports = {
     },
 
     EMBED_FOOTER: "Rocinha RP • Whitelist System"
+    
+    VERSION: "2.0.0"
 };
