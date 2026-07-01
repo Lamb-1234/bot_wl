@@ -31,7 +31,10 @@ module.exports = {
 
             return;
         }
+console.log("Interaction:", interaction.type, interaction.customId);
 
+return require("../interactions/router")(interaction, client);
+        
         // Router
         return require("../interactions/router")(interaction, client);
 
