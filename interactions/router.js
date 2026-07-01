@@ -1,12 +1,11 @@
-const config = require("../config/config");
-const { canHandleWL } = require("../utils/permissions");
-
-const handleRequestButton = require("./buttons/requestWL");
-const handleWhitelistModal = require("./modals/whitelistModal");
-const handleApproveButton = require("./buttons/approveWL");
-const handleRejectButton = require("./buttons/rejectWL");
-
 module.exports = async (interaction, client) => {
+
+    console.log(
+        "Interaction:",
+        interaction.isButton(),
+        interaction.isModalSubmit(),
+        interaction.customId
+    );
 
     try {
 
@@ -14,10 +13,10 @@ module.exports = async (interaction, client) => {
         if (
             interaction.isButton() &&
             interaction.customId === config.BUTTONS.REQUEST_WL
-        ) {
-            return handleRequestButton(interaction);
+        )  {
+    console.log("Entrou no botão WL");
+    return handleRequestButton(interaction);
         }
-
         // Modal
         if (
             interaction.isModalSubmit() &&
