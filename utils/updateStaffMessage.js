@@ -1,25 +1,32 @@
 const {
+    EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle
 } = require("discord.js");
 
-const { updateStatus } = require("./embeds/wlEmbed");
+const config = require("../config/config");
 
-module.exports = async function updateStaffMessage(
-    interaction,
-    approved
-) {
+module.exports = async function updateStaffMessage(interaction, approved) {
 
     const message = interaction.message;
 
-    const embed = updateStatus(
-        message.embeds[0],
+    if (!message?.embeds?.length) return;
+
+    const embed = EmbedBuilder.from(message.embeds[0]);
+
+    embed.setColor(
         approved
-            ? `🟢 APROVADA por ${interaction.user.tag}`
-            : `🔴 REJEITADA por ${interaction.user.tag}`,
-        interaction.user.tag
+            ? config.COLORS.SUCCESS
+            : config.COLORS.ERROR
     );
+
+    embed.addFields({
+        name: "📋 Resultado",
+        value: approved
+            ? `✅ Aprovada por ${interaction.user.tag}`
+            : `❌ Rejeitada por ${interaction.user.tag}`
+    });
 
     const row = new ActionRowBuilder().addComponents(
 
